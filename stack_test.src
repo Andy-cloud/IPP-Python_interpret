@@ -15,45 +15,11 @@
     <instruction order="8" opcode="DEFVAR">
         <arg1 type="var">GF@space</arg1>
     </instruction>
-    <instruction order="67" opcode="DEFVAR">
-        <arg1 type="var">LF@lf</arg1>
-    </instruction>
-    <instruction order="80" opcode="pushs">
-        <arg1 type="int">10</arg1>
-    </instruction>
-    <instruction order="65" opcode="DEFVAR">
-        <arg1 type="var">TF@tf</arg1>
-    </instruction>
-    <instruction order="68" opcode="DEFVAR">
-        <arg1 type="var">GF@tf</arg1>
-    </instruction>
-    <instruction order="66" opcode="pushframe">
-    </instruction>
-    <instruction order="70" opcode="move">
-        <arg1 type="var">GF@space</arg1>
-        <arg2 type="int">10</arg2>
-    </instruction>
-    <instruction order="71" opcode="move">
-        <arg1 type="var">GF@val</arg1>
-        <arg2 type="int">0</arg2>
-    </instruction>
-    <instruction order="72" opcode="move">
-        <arg1 type="var">GF@tf</arg1>
-        <arg2 type="int">0</arg2>
-    </instruction>
-    <instruction order="63" opcode="CREATEFRAME">
-    </instruction>
     <instruction order="9" opcode="PopS">
         <arg1 type="var">GF@val</arg1>
     </instruction>
-    <instruction order="5" opcode="Write">
+    <instruction order="10" opcode="Write">
         <arg1 type="var">GF@val</arg1>
-    </instruction>
-    <instruction order="10" opcode="jump">
-        <arg1 type="label">ondra</arg1>
-    </instruction>
-    <instruction order="18" opcode="label">
-        <arg1 type="label">ondra</arg1>
     </instruction>
     <instruction order="13" opcode="POPS">
         <arg1 type="var">GF@val</arg1>
@@ -70,5 +36,71 @@
     </instruction>
     <instruction order="40" opcode="WRITE">
         <arg1 type="var">GF@val</arg1>
+    </instruction>
+    <instruction order="41" opcode="CALL">
+        <arg1 type="label">tam</arg1>
+    </instruction>
+    <instruction order="42" opcode="CALL">
+        <arg1 type="label">ano</arg1>
+    </instruction>
+    <instruction order="43" opcode="move">
+        <arg1 type="var">GF@space</arg1>
+        <arg2 type="int">1</arg2>
+    </instruction>
+    <instruction order="44" opcode="label">
+        <arg1 type="label">tam</arg1>
+    </instruction>
+    <instruction order="45" opcode="return">
+    </instruction>
+    <instruction order="46" opcode="label">
+        <arg1 type="label">ano</arg1>
+    </instruction>
+    <instruction order="47" opcode="DEFVAR">
+        <arg1 type="var">GF@empty</arg1>
+    </instruction>
+    <instruction order="48" opcode="read">
+        <arg1 type="var">GF@space</arg1>
+        <arg2 type="type">string</arg2>
+    </instruction>
+    <instruction order="49" opcode="type">
+        <arg1 type="var">GF@space</arg1>
+        <arg2 type="var">GF@empty</arg2>
+    </instruction>
+    <instruction order="50" opcode="concat">
+        <arg1 type="var">GF@space</arg1>
+        <arg2 type="string">Ahoj</arg2>
+        <arg3 type="string"> světe</arg3>
+    </instruction>
+    <instruction order="51" opcode="getchar">
+        <arg1 type="var">GF@space</arg1>
+        <arg2 type="string">Ahoj</arg2>
+        <arg3 type="int">2</arg3>
+    </instruction>
+    <instruction order="52" opcode="setchar">
+        <arg1 type="var">GF@val</arg1>
+        <arg2 type="int">3</arg2>
+        <arg3 type="string">k</arg3>
+    </instruction>
+    <instruction order="53" opcode="strlen">
+        <arg1 type="var">GF@empty</arg1>
+        <arg2 type="string">ondra</arg2>
+    </instruction>
+    <instruction order="54" opcode="jumpifeq">
+        <arg1 type="label">kamtam</arg1>
+        <arg2 type="int">0</arg2>
+        <arg3 type="int">1</arg3>
+    </instruction>
+    <instruction order="56" opcode="DEFVAR">
+        <arg1 type="var">GF@hotovo</arg1>
+    </instruction>
+    <instruction order="57" opcode="move">
+        <arg1 type="var">GF@hotovo</arg1>
+        <arg2 type="int">10</arg2>
+    </instruction>
+    <instruction order="58" opcode="label">
+        <arg1 type="label">kamtam</arg1>
+    </instruction>
+    <instruction order="59" opcode="exit">
+        <arg1 type="var">GF@hotovo</arg1>
     </instruction>
 </program>
