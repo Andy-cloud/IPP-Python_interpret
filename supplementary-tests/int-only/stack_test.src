@@ -37,9 +37,4 @@
     <instruction order="40" opcode="WRITE">
         <arg1 type="var">GF@val</arg1>
     </instruction>
-    <instruction order="41" opcode="str2int">
-        <arg1 type="var">GF@space</arg1>
-        <arg2 type="var">GF@val</arg2>
-        <arg3 type="int">2</arg3>
-    </instruction>
 </program>

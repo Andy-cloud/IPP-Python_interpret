@@ -15,7 +15,10 @@ stack_intern_counter = []
 intern_counter = 0
 
 def print_help():
-    print("help")
+    print("--help --> viz společný parametr všech skriptů ")
+    print("--source=file --> vstupní soubor s XML reprezentací zdrojového kódu")
+    print("--input=file --> soubor se vstupy pro samotnou interpretaci zadaného zdrojového kódu.")
+    
 def process_arguments(arguments):
     global file_name
     global input_file
@@ -27,7 +30,7 @@ def process_arguments(arguments):
         elif o[0] == "--input":
             input_file = o[1]
         else:
-            print("Použit špatný paramentr")
+            print("Použit špatný paramentr", file=sys.stderr)
             exit(10)
 #kontrola zda je proměnná zapsána správně nebo konstanta a jestli existuje rámec            
 def check_frames(variable, can_empty):
@@ -40,60 +43,69 @@ def check_frames(variable, can_empty):
     splited = []
     try:
         for i in range(len(variable)):
-            
-            if re.match('GF@\S+', variable[i].text):
-                
-                split = variable[i].text.split("@")
-                splited.append(split[1])
-                
-                if not splited[i] in variables_diction_GF:
-                    error = 1
-                else:
-                    tmp.append(variables_diction_GF)
+            if variable[i].attrib["type"] == "var":
+                if re.match('GF@\S+', variable[i].text):
                     
-            elif re.match('LF@\S+', variable[i].text):
-                
-                split = variable[i].text.split("@")
-                splited.append(split[1])
-                
-                if not splited[i] in variables_diction_LF:
-                    error = 1
-                else:
-                    tmp.append(variables_diction_LF)
+                    split = variable[i].text.split("@")
+                    splited.append(split[1])
                     
-            elif re.match('TF@\S+', variable[i].text):
-                
-                split = variable[i].text.split("@")
-                splited.append(split[1])
-                
-                if not splited[i] in variables_diction_TF:
-                    error = 1
-                else:
-                    tmp.append(variables_diction_TF)
+                    if not splited[i] in variables_diction_GF:
+                        error = 1
+                    else:
+                        tmp.append(variables_diction_GF)
+                        
+                elif re.match('LF@\S+', variable[i].text):
+                    
+                    split = variable[i].text.split("@")
+                    splited.append(split[1])
+                    
+                    if not splited[i] in variables_diction_LF:
+                        error = 1
+                    else:
+                        tmp.append(variables_diction_LF)
+                        
+                elif re.match('TF@\S+', variable[i].text):
+                    
+                    split = variable[i].text.split("@")
+                    splited.append(split[1])
+                    
+                    if not splited[i] in variables_diction_TF:
+                        error = 1
+                    else:
+                        tmp.append(variables_diction_TF)
             else:
                 array_tmp = []
-                splited.append(variable[i].text)
-                
-                if variable[i].attrib["type"] == "int":
-                    try:
-                        array_tmp.append(int(variable[i].text))
-                    except ValueError: 
-                        print(str(intern_counter) + ". Špatná hodnota konstanty int")
+                if variable[i].text == None:
+                    splited.append("")
+                    if variable[i].attrib["type"] == "int" or variable[i].attrib["type"] == "bool":
+                        print("Špatná hodnota",file=sys.stderr)
                         exit(52)
-                elif variable[i].attrib["type"] == "bool":
-                    if variable[i].text.lower() == "false":
-                        array_tmp.append(False)
-                    elif variable[i].text.lower() == "true":
-                        array_tmp.append(True)
+                    elif variable[i].attrib["type"] == "nil":
+                        array_tmp.append("nil")
                     else:
-                        print("Nepodporovaný typ pro bool")
-                        exit(52)
-                else:
-                    array_tmp.append(variable[i].text)
+                        array_tmp.append("")
+                else:    
+                    splited.append(variable[i].text)
+                    if variable[i].attrib["type"] == "int":
+                        try:
+                            array_tmp.append(int(variable[i].text))
+                        except ValueError: 
+                            print(str(intern_counter) + ". Špatná hodnota konstanty int",file=sys.stderr)
+                            exit(52)
+                    elif variable[i].attrib["type"] == "bool":
+                        if variable[i].text.lower() == "false":
+                            array_tmp.append(False)
+                        elif variable[i].text.lower() == "true":
+                            array_tmp.append(True)
+                        else:
+                            print("Nepodporovaný typ pro bool",file=sys.stderr)
+                            exit(52)
+                    else:
+                        array_tmp.append(variable[i].text)
                     
                 array_tmp.append(variable[i].attrib["type"])
                 tmp.append(array_tmp)
-    
+
         if not can_empty:
             for j in range(1,len(tmp)):
                 if type(tmp[j]) is dict:
@@ -101,12 +113,12 @@ def check_frames(variable, can_empty):
                 else:
                     arg = tmp[j]
                 if not arg:
-                    print("Prázdná proměnná jako argument")
+                    print("Prázdná proměnná jako argument", file=sys.stderr)
                     exit(56) 
         return error, tmp, splited
     
     except TypeError:
-        print(str(intern_counter) + ". Není vytvořený daný rámec")
+        print(str(intern_counter) + ". Není vytvořený daný rámec", file=sys.stderr)
         exit(55)
 #zpracování instrukce move        
 def move(variable):
@@ -115,7 +127,7 @@ def move(variable):
     splited_variable = []
     error, variable_frame, splited_variable = check_frames(variable,False)
     if error:
-        print(str(intern_counter) + ". Proměnná není vytvořená")
+        print(str(intern_counter) + ". Proměnná není vytvořená", file=sys.stderr)
         exit(54)
     else:
         if not type(variable_frame[1]) is dict:
@@ -135,7 +147,7 @@ def select_sign(arg1,arg2,operator):
         try:
             return int(arg1 // arg2)
         except ZeroDivisionError:
-            print(str(intern_counter) + ". Nelze dělit nulou")
+            print(str(intern_counter) + ". Nelze dělit nulou", file=sys.stderr)
             exit(57)
 #zpracování instrukce add/sub/mul/idiv        
 def process(variable, op):
@@ -145,26 +157,27 @@ def process(variable, op):
     args_for_op = []
     error, variable_frame, splited_variable = check_frames(variable,False)
     if error:
-        print(str(intern_counter) + ". Proměnná není vytvořená")
+        print(str(intern_counter) + ". Proměnná není vytvořená", file=sys.stderr)
         exit(54)
     else:
         for i in range(1,len(variable_frame)):
             
             if not type(variable_frame[i]) is dict:
                 if variable_frame[i][1] != "int":
-                    print(op + ": se může provádět jen nad int")
+                    print(op + ": se může provádět jen nad int", file=sys.stderr)
                     exit(53)
                 else: 
                     args_for_op.append(variable_frame[i][0])
             else:
                 try:
                     if variable_frame[i][splited_variable[i]][1] != "int":
-                        print(op + ": se může provádět jen nad int")
+                        print(op + ": se může provádět jen nad int", file=sys.stderr)
                         exit(53)
                     else:
                         args_for_op.append(variable_frame[i][splited_variable[i]][0])
                 except IndexError:
-                    print("Neinicializovaná proměnná")
+                    print("Neinicializovaná proměnná", file=sys.stderr)
+                    exit(56)
   
         variable_frame[0][splited_variable[0]] = [select_sign(args_for_op[0],args_for_op[1],op),"int"]
         
@@ -194,7 +207,7 @@ def do_comparation(arg1, arg2, operator):
 def comparison_operation(variable, op):
     error, variable_frame, splited_variable = check_frames(variable,True)
     if error:
-        print(str(intern_counter) + ". Proměnná není vytvořená")
+        print(str(intern_counter) + ". Proměnná není vytvořená", file=sys.stderr)
         exit(54)
     else:
         if not type(variable_frame[1]) is dict:
@@ -215,13 +228,13 @@ def comparison_operation(variable, op):
                 if arg1[1] == "bool" and arg2[1] == "bool":
                     variable_frame[0][splited_variable[0]] = [do_comparation(arg1, arg2, op),"bool"]
                 else:
-                    print(variable.attrib["opcode"] + ": Nepodporovaný typ pro tuto operaci")
+                    print(variable.attrib["opcode"] + ": Nepodporovaný typ pro tuto operaci",file=sys.stderr)
                     exit(53)    
             else:
                 if arg1[1] == arg2[1]:
                     variable_frame[0][splited_variable[0]] = [do_comparation(arg1, arg2, op),"bool"]
                 else:
-                    print(variable.attrib["opcode"] + ": Nepodporovaný typ pro tuto operaci")
+                    print(variable.attrib["opcode"] + ": Nepodporovaný typ pro tuto operaci",file=sys.stderr)
                     exit(53)
         else:
             if op == "=":
@@ -236,7 +249,7 @@ def comparison_operation(variable, op):
                     else:
                         variable_frame[0][splited_variable[0]] = [False,"bool"]
             else:
-                print(variable.attrib["opcode"] + ": Nepodporovaná operace pro typ nil") 
+                print(variable.attrib["opcode"] + ": Nepodporovaná operace pro typ nil",file=sys.stderr) 
                 exit(53)            
               
         
@@ -251,7 +264,6 @@ def process_child(root,parent):
     
     for child in parent:
         intern_counter += 1
-        print(str(intern_counter) + ". " + str(child.attrib["opcode"]))
         #add
         if str(child.attrib["opcode"]).lower() == "add":
             process(child, "+")
@@ -271,7 +283,7 @@ def process_child(root,parent):
         elif str(child.attrib["opcode"]).lower() == "pushs":
             error, variable_frame , splited_variable = check_frames(child,True)
             if error:
-                print(str(intern_counter) + ". Proměnná není vytvořená")
+                print(str(intern_counter) + ". Proměnná není vytvořená",file=sys.stderr)
                 exit(54)
             else:
                 if not type(variable_frame[0]) is dict:
@@ -282,19 +294,19 @@ def process_child(root,parent):
         elif str(child.attrib["opcode"]).lower() == "pops":
             error, variable_frame , splited_variable = check_frames(child,True)
             if error:
-                print(str(intern_counter) + ". Proměnná není vytvořená")
+                print(str(intern_counter) + ". Proměnná není vytvořená", file=sys.stderr)
                 exit(54)
             else:
                 if stack_data:
                     variable_frame[0][splited_variable[0]] = stack_data.pop()
                 else:
-                    print(str(intern_counter) + ". Prázdný zásobník nelze dělat pops")
+                    print(str(intern_counter) + ". Prázdný zásobník nelze dělat pops",file=sys.stderr)
                     exit(56)
         #int2char
         elif str(child.attrib["opcode"]).lower() == "int2char":
             error, variable_frame , splited_variable = check_frames(child,False)
             if error:
-                print(str(intern_counter) + ". Proměnná není vytvořená")
+                print(str(intern_counter) + ". Proměnná není vytvořená",file=sys.stderr)
                 exit(54)
             else:
                 if not type(variable_frame[1]) is dict:
@@ -304,13 +316,13 @@ def process_child(root,parent):
                 try:
                     variable_frame[0][splited_variable[0]] = [chr(arg_int[0]),"string"]
                 except ValueError:
-                    print("Zadána špatná ascii hodnota")
+                    print("Zadána špatná ascii hodnota", file=sys.stderr)
                     exit(58)
         #str2int
         elif str(child.attrib["opcode"]).lower() == "str2int":
             error, variable_frame , splited_variable = check_frames(child,False)
             if error:
-                print(str(intern_counter) + ". Proměnná není vytvořená")
+                print(str(intern_counter) + ". Proměnná není vytvořená", file=sys.stderr)
                 exit(54)
             else:
                 if not type(variable_frame[1]) is dict:
@@ -324,7 +336,7 @@ def process_child(root,parent):
                 try:
                     variable_frame[0][splited_variable[0]] = [ord(arg_str[0][arg_int[0]]), "int"]
                 except IndexError:
-                    print("Špatný index řetězce")
+                    print("Špatný index řetězce", file=sys.stderr)
                     exit(58)
         #lt
         elif str(child.attrib["opcode"]).lower() == "lt":
@@ -348,21 +360,27 @@ def process_child(root,parent):
         elif str(child.attrib["opcode"]).lower() == "write":
             error, variable_frame , splited_variable = check_frames(child,True)   
             if error:
-                print(str(intern_counter) + ". Proměnná není vytvořená")
+                print(str(intern_counter) + ". Proměnná není vytvořená", file=sys.stderr)
                 exit(54)
             else:
-                print(variable_frame[0])
                 if not type(variable_frame[0]) is dict:
                     arg_write = variable_frame[0]
                 else:
                     arg_write = variable_frame[0][splited_variable[0]]
                 if arg_write:
-                    if arg_write[1] == "string" or arg_write[1] == "int":
+                    if arg_write[1] == "int" or arg_write[1] == "bool":
                         print(arg_write[0],end='') 
                     elif arg_write[1] == "nil":
                         print("")   
+                    elif arg_write[1] == "string":
+                        x = re.findall("\\\\[0-9]{3}", arg_write[0])
+                        for escape in x:
+                            escape_value = int(escape.replace("\\", ""))
+                            arg_write[0] = arg_write[0].replace(escape, chr(escape_value))
+                        print(arg_write[0],end='') 
+                            
                 else:
-                    print("Není žádná hodnota v proměnné")
+                    print("Není žádná hodnota v proměnné",file=sys.stderr)
                     exit(56)
                   
         #createframe
@@ -376,7 +394,7 @@ def process_child(root,parent):
         elif str(child.attrib["opcode"]).lower() == "pushframe":
             
             if variables_diction_TF == None:
-                print(str(intern_counter) + ". Nelze pushnout nedefinovaný rámec")
+                print(str(intern_counter) + ". Nelze pushnout nedefinovaný rámec", file=sys.stderr)
                 exit(55)
                 
             if variables_diction_LF != None:
@@ -396,7 +414,7 @@ def process_child(root,parent):
                     variables_diction_LF = None
                     
             else:
-                print(str(intern_counter) + ". Prázdný zásobník rámců")
+                print(str(intern_counter) + ". Prázdný zásobník rámců",file=sys.stderr)
                 exit(55)
         #defvar 
         elif str(child.attrib["opcode"]).lower() == "defvar":
@@ -407,7 +425,7 @@ def process_child(root,parent):
                 if splited[0] == "GF":
                     
                     if splited[1] in variables_diction_GF:
-                        print(str(intern_counter) + ". již existuje proměnná")
+                        print(str(intern_counter) + ". již existuje proměnná",file=sys.stderr)
                         exit(52)
                     else:
                         variables_diction_GF[splited[1]] = list()
@@ -415,11 +433,11 @@ def process_child(root,parent):
                 elif splited[0] == "LF":
                     
                     if variables_diction_LF == None:
-                        print(str(intern_counter) + ". Nedefinovaný rámec LF")
+                        print(str(intern_counter) + ". Nedefinovaný rámec LF", file=sys.stderr)
                         exit(55)
                         
                     if splited[1] in variables_diction_LF:
-                        print(str(intern_counter) + ". již existuje proměnná")
+                        print(str(intern_counter) + ". již existuje proměnná",file=sys.stderr)
                         exit(52)
                     else:
                         variables_diction_LF[splited[1]] = list()
@@ -427,17 +445,17 @@ def process_child(root,parent):
                 elif splited[0] == "TF":
                     
                     if variables_diction_TF == None:
-                        print(str(intern_counter) + ". Nedefinovaný rámec TF")
+                        print(str(intern_counter) + ". Nedefinovaný rámec TF", file=sys.stderr)
                         exit(55)
                         
                     if splited[1] in variables_diction_TF:
-                        print(str(intern_counter) + ". již existuje proměnná")
+                        print(str(intern_counter) + ". již existuje proměnná", file=sys.stderr)
                         exit(52)
                     else:
                         variables_diction_TF[splited[1]] = list()
                         
             else:
-                print(str(intern_counter) + ". můžeš definovat pouze proměnnou")
+                print(str(intern_counter) + ". můžeš definovat pouze proměnnou",file=sys.stderr)
                 exit(53)
         #call
         elif str(child.attrib["opcode"]).lower() == "call":
@@ -451,17 +469,16 @@ def process_child(root,parent):
                         intern_counter = i
                         return parent 
             
-            print(str(intern_counter) + ". Neexistuje návěstí s tímto jménem")
+            print(str(intern_counter) + ". Neexistuje návěstí s tímto jménem", file=sys.stderr)
             exit(52)
         #return
         elif str(child.attrib["opcode"]).lower() == "return":
-            print(stack_intern_counter)
             if stack_intern_counter:
                 intern_counter = stack_intern_counter.pop()
                 parent = deepcopy(root[intern_counter:])
                 return parent 
             else:
-                print("Prázdný zásobník volání")
+                print("Prázdný zásobník volání", file=sys.stderr)
                 exit(56)
         #read
         elif str(child.attrib["opcode"]).lower() == "read":
@@ -477,7 +494,7 @@ def process_child(root,parent):
                 elif splited[0] == "LF":
                     
                     if variables_diction_LF == None:
-                        print(str(intern_counter) + ". Nedefinovaný rámec LF")
+                        print(str(intern_counter) + ". Nedefinovaný rámec LF",file=sys.stderr)
                         exit(55)
                         
                     if splited[1] in variables_diction_LF:
@@ -486,13 +503,13 @@ def process_child(root,parent):
                 elif splited[0] == "TF":
                     
                     if variables_diction_TF == None:
-                        print(str(intern_counter) + ". Nedefinovaný rámec TF")
+                        print(str(intern_counter) + ". Nedefinovaný rámec TF",file=sys.stderr)
                         exit(55)
                         
                     if splited[1] in variables_diction_TF:
                         variable_frame.append(variables_diction_TF)   
                 else:
-                    print("Poměnná neexituje")
+                    print("Poměnná neexituje",file=sys.stderr)
                     exit(54)   
                     
                 try:
@@ -508,30 +525,28 @@ def process_child(root,parent):
                                 variable_frame[0][splited[1]] = [int(value),child[1].text] 
                             elif child[1].text == "bool":
                                 if value.lower() == "true":
-                                    print(variable_frame)
-                                    print(splited[1])
                                     variable_frame[0][splited[1]] = [True,child[1].text]
                                 else:
                                     variable_frame[0][splited[1]] = [False,child[1].text]
                             elif child[1].text == "string":
                                 variable_frame[0][splited[1]] = [value,child[1].text]
                             else:
-                                print("Špatný typ operandu")
+                                print("Špatný typ operandu", file=sys.stderr)
                                 exit(53)
                         except ValueError:
-                            print("Špatné typy operandů")
+                            print("Špatné typy operandů", file=sys.stderr)
                             exit(53)
                     else:
-                        print("Špatný typ paramentu")
+                        print("Špatný typ paramentu", file=sys.stderr)
                         exit(53)             
             else:
-                print(str(intern_counter) + ". Špatný typ paramentru")
+                print(str(intern_counter) + ". Špatný typ paramentru", file=sys.stderr)
                 exit(53)
         #type
         elif str(child.attrib["opcode"]).lower() == "type":
             error, variable_frame, splited_variable = check_frames(child, True)
             if error:
-                print(str(intern_counter) + ". Proměnná není vytvořená")
+                print(str(intern_counter) + ". Proměnná není vytvořená", file=sys.stderr)
                 exit(54)
             else:
                 if not type(variable_frame[1]) is dict:
@@ -546,7 +561,7 @@ def process_child(root,parent):
         elif str(child.attrib["opcode"]).lower() == "concat":
             error, variable_frame, splited_variable = check_frames(child, False)
             if error:
-                print(str(intern_counter) + ". Proměnná není vytvořená")
+                print(str(intern_counter) + ". Proměnná není vytvořená", file=sys.stderr)
                 exit(54)
             else:  
                 if not type(variable_frame[1]) is dict:
@@ -560,13 +575,13 @@ def process_child(root,parent):
                 if arg_str1[1] == arg_str2[1] and arg_str1[1] == "string":
                     variable_frame[0][splited_variable[0]] = [arg_str1[0]+arg_str2[0],"string"]
                 else:
-                    print("nesprávné datové typy")
+                    print("nesprávné datové typy", file=sys.stderr)
                     exit(53) 
         #strlen
         elif str(child.attrib["opcode"]).lower() == "strlen":
             error, variable_frame, splited_variable = check_frames(child, True)
             if error:
-                print(str(intern_counter) + ". Proměnná není vytvořená")
+                print(str(intern_counter) + ". Proměnná není vytvořená",file=sys.stderr)
                 exit(54)
             else:  
                 if not type(variable_frame[1]) is dict:
@@ -577,16 +592,16 @@ def process_child(root,parent):
                     try:
                         variable_frame[0][splited_variable[0]] = [len(arg_str[0]),"int"]
                     except TypeError:
-                        print("Špatný typ operandu")
+                        print("Špatný typ operandu",file=sys.stderr)
                         exit(53)
                 else:
-                    print("Špatný typ operandu")
+                    print("Špatný typ operandu",file=sys.stderr)
                     exit(53)
         #getchar
         elif str(child.attrib["opcode"]).lower() == "getchar":
             error, variable_frame , splited_variable = check_frames(child,False)
             if error:
-                print(str(intern_counter) + ". Proměnná není vytvořená")
+                print(str(intern_counter) + ". Proměnná není vytvořená",file=sys.stderr)
                 exit(54)
             else:
                 if not type(variable_frame[1]) is dict:
@@ -601,17 +616,17 @@ def process_child(root,parent):
                     try:
                         variable_frame[0][splited_variable[0]] = [arg_str[0][arg_int[0]], "int"]
                     except IndexError:
-                        print("Špatný index řetězce")
+                        print("Špatný index řetězce",file=sys.stderr)
                         exit(58)  
                 else:
-                    print("Špatný typ operandu")
+                    print("Špatný typ operandu",file=sys.stderr)
                     exit(53)
                     
         #setchar
         elif str(child.attrib["opcode"]).lower() == "setchar":
             error, variable_frame , splited_variable = check_frames(child,True)
             if error:
-                print(str(intern_counter) + ". Proměnná není vytvořená")
+                print(str(intern_counter) + ". Proměnná není vytvořená",file=sys.stderr)
                 exit(54)
             else:
                 if not type(variable_frame[1]) is dict:
@@ -629,19 +644,19 @@ def process_child(root,parent):
                             help_variable[arg_int[0]] = arg_char[0]
                             variable_frame[0][splited_variable[0]][0] = "".join(help_variable)
                         except IndexError:
-                            print("Špatný index řetězce")
+                            print("Špatný index řetězce",file=sys.stderr)
                             exit(58) 
                     else:
-                        print("Špatný typ operandu")
+                        print("Špatný typ operandu",file=sys.stderr)
                         exit(53)
                 else:
-                    print("Prázdný řetězec")
+                    print("Prázdný řetězec",file=sys.stderr)
                     exit(58) 
         #jumpifeq/jumpifneq
         elif str(child.attrib["opcode"]).lower() == "jumpifeq" or str(child.attrib["opcode"]).lower() == "jumpifneq":
             error, variable_frame, splited_variable = check_frames(child,False)
             if error:
-                print(str(intern_counter) + ". Proměnná není vytvořená")
+                print(str(intern_counter) + ". Proměnná není vytvořená",file=sys.stderr)
                 exit(54)
             else:
                 if not type(variable_frame[1]) is dict:
@@ -662,7 +677,7 @@ def process_child(root,parent):
                                         intern_counter = i
                                         return parent 
                             
-                            print(str(intern_counter) + ". Neexistuje návěstí s tímto jménem")
+                            print(str(intern_counter) + ". Neexistuje návěstí s tímto jménem",file=sys.stderr)
                             exit(52)
                     else:
                         if do_comparation(arg1, arg2, "="):
@@ -673,10 +688,10 @@ def process_child(root,parent):
                                         intern_counter = i
                                         return parent 
                             
-                            print(str(intern_counter) + ". Neexistuje návěstí s tímto jménem")
+                            print(str(intern_counter) + ". Neexistuje návěstí s tímto jménem",file=sys.stderr)
                             exit(52)
                 else:
-                    print("Nepodporovaná kombinace typů")
+                    print("Nepodporovaná kombinace typů",file=sys.stderr)
                     exit(53)
         #exit
         elif str(child.attrib["opcode"]).lower() == "exit":
@@ -690,7 +705,7 @@ def process_child(root,parent):
                 elif splited[0] == "LF":
                     
                     if variables_diction_LF == None:
-                        print(str(intern_counter) + ". Nedefinovaný rámec LF")
+                        print(str(intern_counter) + ". Nedefinovaný rámec LF",file=sys.stderr)
                         exit(55)
                         
                     if splited[1] in variables_diction_LF:
@@ -699,30 +714,27 @@ def process_child(root,parent):
                 elif splited[0] == "TF":
                     
                     if variables_diction_TF == None:
-                        print(str(intern_counter) + ". Nedefinovaný rámec TF")
+                        print(str(intern_counter) + ". Nedefinovaný rámec TF",file=sys.stderr)
                         exit(55)
                         
                     if splited[1] in variables_diction_TF:
                         variable_frame.append(variables_diction_TF)   
                 else:
-                    print("Poměnná neexituje")
+                    print("Poměnná neexituje",file=sys.stderr)
                     exit(54) 
                 if variable_frame[0][splited[1]][1] == "int":
                     if int(variable_frame[0][splited[1]][0]) >= 0 and int(variable_frame[0][splited[1]][0]) <= 49:
-                        print(variable_frame[0][splited[1]][0])
                         exit(int(variable_frame[0][splited[1]][0]))  
                     else:
-                        print("Nevalidní číslená hodnota")
+                        print("Nevalidní číslená hodnota",file=sys.stderr)
                         exit(57)
             else:
                 if child[0].attrib["type"] == "int":
                     if int(child[0].text) >= 0 and int(child[0].text) <= 49:
-                        print(int(child[0].text))
                         exit(int(child[0].text))
                     else:
-                        print("Nevalidní číslená hodnota")
+                        print("Nevalidní číslená hodnota",file=sys.stderr)
                         exit(57)
-                print(variable_frame)
         #jump
         elif str(child.attrib["opcode"]).lower() == "jump":
             
@@ -733,10 +745,8 @@ def process_child(root,parent):
                         intern_counter = i
                         return parent 
             
-            print(str(intern_counter) + ". Neexistuje návěstí s tímto jménem")
+            print(str(intern_counter) + ". Neexistuje návěstí s tímto jménem",file=sys.stderr)
             exit(52)
-        else:
-            print("neznámá instrukce")
         #TODO: Dprint a break
         
     return []
@@ -745,29 +755,28 @@ def process_child(root,parent):
 try:
     opts, args = getopt.getopt(sys.argv[1:],"", ["help", "source=", "input="])
 except getopt.GetoptError:
-    print("Špatné parametry")
+    print("Špatné parametry",file=sys.stderr)
     exit(10)
 process_arguments(opts)
 if file_name:
     try:
         inf = open(file_name,'r')
     except:
-        print("Chyba při otevírání souboru")
+        print("Chyba při otevírání souboru",file=sys.stderr)
         exit(11)
     try:
         tree = ET.parse(inf)
         root = tree.getroot()
     except ET.ParseError:
-        print("Špatný formát xml")
+        print("Špatný formát xml",file=sys.stderr)
         exit(31)
 else:
     inf = sys.stdin
     string = inf.read()
-    print(string)
     try:
         root = ET.fromstring(string)
     except ET.ParseError:
-        print("Špatný formát xml")
+        print("Špatný formát xml",file=sys.stderr)
         exit(31)
 root[:] = sorted(root, key=lambda child: int(child.get('order')))
 save_copy = deepcopy(root)
@@ -776,7 +785,7 @@ if input_file:
     try:
         inf = open(input_file,'r')
     except:
-        print("Chyba při otevírání souboru")
+        print("Chyba při otevírání souboru",file=sys.stderr)
         exit(11)
 else:
     inf = sys.stdin
@@ -788,26 +797,19 @@ prev = -1
 for o in root:
     if int(o.attrib["order"]) >= 0:
         if int(o.attrib["order"]) == prev:
-            print(str(intern_counter) + ". Duplicitní order")
+            print(str(intern_counter) + ". Duplicitní order", file=sys.stderr)
             exit(32)
     else:
-        print(str(intern_counter) + ". záporný order")
+        print(str(intern_counter) + ". záporný order",file=sys.stderr)
         exit(32)
     prev = int(o.attrib["order"])
     
 while root:
-    """ if int(min.get("order")) == prev_min:
-        print("duplicitní pořadí")
-        exit(32)
-    if int(min.get("order")) < 0:
-        print("order menší jak nula")
-        exit(32) """
     root = process_child(save_copy,root)
-    print("\n")
-    print(str(variables_diction_GF) + " --> GF")
-    print(str(variables_diction_LF) + " --> LF")
-    print(str(variables_diction_TF) + " --> TF")
+    
+    
     
 
 if inf is not sys.stdin:
     inf.close()
+exit(0)
