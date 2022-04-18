@@ -18,12 +18,16 @@ def print_help():
     print("--help --> viz společný parametr všech skriptů ")
     print("--source=file --> vstupní soubor s XML reprezentací zdrojového kódu")
     print("--input=file --> soubor se vstupy pro samotnou interpretaci zadaného zdrojového kódu.")
+    exit(0)
     
 def process_arguments(arguments):
     global file_name
     global input_file
     for o in arguments:
         if o[0] == "--help":
+            if len(arguments) > 1:
+                print("Není možné používat více paramenrů",file=sys.stderr)
+                exit(10)
             print_help()
         elif o[0] == "--source":
             file_name = o[1]
@@ -32,6 +36,9 @@ def process_arguments(arguments):
         else:
             print("Použit špatný paramentr", file=sys.stderr)
             exit(10)
+    if file_name == "" and input_file == "":
+        print("Musí být zadán aspoň jeden parametr",file=sys.stderr)
+        exit(10)
 #kontrola zda je proměnná zapsána správně nebo konstanta a jestli existuje rámec            
 def check_frames(variable, can_empty):
     global variables_diction_GF
@@ -318,6 +325,9 @@ def process_child(root,parent):
                 except ValueError:
                     print("Zadána špatná ascii hodnota", file=sys.stderr)
                     exit(58)
+                except TypeError:
+                    print("špatná hodnota pro instrukci", file=sys.stderr)
+                    exit(53)
         #str2int
         elif str(child.attrib["opcode"]).lower() == "str2int":
             error, variable_frame , splited_variable = check_frames(child,False)
@@ -338,6 +348,9 @@ def process_child(root,parent):
                 except IndexError:
                     print("Špatný index řetězce", file=sys.stderr)
                     exit(58)
+                except TypeError:
+                    print("špatná hodnota pro instrukci", file=sys.stderr)
+                    exit(53)
         #lt
         elif str(child.attrib["opcode"]).lower() == "lt":
             comparison_operation(child, "<")
@@ -371,7 +384,7 @@ def process_child(root,parent):
                     if arg_write[1] == "int" or arg_write[1] == "bool":
                         print(arg_write[0],end='') 
                     elif arg_write[1] == "nil":
-                        print("")   
+                        print("",end='')   
                     elif arg_write[1] == "string":
                         x = re.findall("\\\\[0-9]{3}", arg_write[0])
                         for escape in x:

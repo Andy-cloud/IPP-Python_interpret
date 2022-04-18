@@ -56,7 +56,7 @@
         <arg1 type="label">ano</arg1>
     </instruction>
     <instruction order="47" opcode="DEFVAR">
-        <arg1 type="var">GF@empty</arg1>
+        <arg1 type="var">LF@empty</arg1>
     </instruction>
     <instruction order="48" opcode="read">
         <arg1 type="var">GF@space</arg1>
@@ -100,7 +100,7 @@
     <instruction order="58" opcode="label">
         <arg1 type="label">kamtam</arg1>
     </instruction>
-    <instruction order="59" opcode="exit">
+    <instruction order="60" opcode="exit">
         <arg1 type="var">GF@hotovo</arg1>
     </instruction>
 </program>
